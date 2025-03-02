@@ -3,6 +3,10 @@
 <head>
     <title>Graft Compatibility</title>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+    <style>
+        table { border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid black; padding: 5px; text-align: left; }
+    </style>
 </head>
 <body>
     <h1>Graft Compatibility Checker</h1>
@@ -19,24 +23,23 @@
         <option value="Schinus molle">Schinus molle</option>
     </select>
     <button onclick="runScript()">Calculate</button>
-   <table id="output" border="1"></table>
-       
-   <script>
-    async function loadPyodideAndRun() {
-        let pyodide = await loadPyodide();
-        await pyodide.loadPackage("pandas");
-        return pyodide;
-    }
+    <table id="output" border="1"></table>
 
-    let pyodideReady = loadPyodideAndRun();
+    <script>
+        async function loadPyodideAndRun() {
+            let pyodide = await loadPyodide();
+            await pyodide.loadPackage("pandas");
+            return pyodide;
+        }
 
-    async function runScript() {
-        let pyodide = await pyodideReady;
-        let baseline = document.getElementById("baseline").value;
-        let output = document.getElementById("output");
+        let pyodideReady = loadPyodideAndRun();
 
-        // Python code with explicit return
-        let pythonCode = `
+        async function runScript() {
+            let pyodide = await pyodideReady;
+            let baseline = document.getElementById("baseline").value;
+            let output = document.getElementById("output");
+
+            let pythonCode = `
 import pandas as pd
 
 data = {
@@ -67,28 +70,31 @@ results = []
 for i, row in df.iterrows():
     if row["Species"] != "${baseline}":
         compatibility = graft_compatibility(baseline, row)
-        results.append({"Species": row["Species"], "Family": row["Family"], "Compatibility_Score": compatibility})
+        results.append({"Species": row["Species"], "Family": row["Family"], "Compatibility_Score": str(compatibility)})
 
 results_df = pd.DataFrame(results).sort_values(by="Compatibility_Score", ascending=False)
-output = f"Grafting compatibility with ${baseline}:\\n{results_df.to_string(index=False)}"
-output  # Return the string explicitly
-        `;
+# Use a clear delimiter (||) instead of tabs
+output = "Species||Family||Compatibility_Score\\n" + "\\n".join(
+    f"{row['Species']}||{row['Family']}||{row['Compatibility_Score']}" for _, row in results_df.iterrows()
+)
+output
+            `;
 
-        try {
-            let result = await pyodide.runPythonAsync(pythonCode);
-             let lines = result.split("\n");
+            try {
+                let result = await pyodide.runPythonAsync(pythonCode);
+                let lines = result.split("\n");
                 let table = "<tr><th>Species</th><th>Family</th><th>Compatibility Score</th></tr>";
                 for (let i = 1; i < lines.length; i++) {  // Skip header
-                    if (lines[i].trim()) {  // Ignore empty lines
-                        let [species, family, score] = lines[i].split("\t");
+                    if (lines[i].trim()) {
+                        let [species, family, score] = lines[i].split("||");
                         table += `<tr><td>${species}</td><td>${family}</td><td>${score}</td></tr>`;
                     }
                 }
-                output.innerHTML = table || "Something went wrong—no result returned";
-        } catch (err) {
-            output.textContent = "Error: " + err.message;
+                output.innerHTML = table;
+            } catch (err) {
+                output.innerHTML = "Error: " + err.message;
+            }
         }
-    }
-</script>
+    </script>
 </body>
 </html>
