@@ -19,7 +19,17 @@
         <option value="Schinus molle">Schinus molle</option>
     </select>
     <button onclick="runScript()">Calculate</button>
-    <pre id="output"></pre>
+   <table id="output" border="1"></table>
+        <script>
+            // ... runScript() ...
+            let rows = result.split("\n").slice(1);  // Skip header
+            let table = "<tr><th>Species</th><th>Family</th><th>Score</th></tr>";
+            rows.forEach(row => {
+                let [species, family, score] = row.trim().split(/\s+/);
+                table += `<tr><td>${species}</td><td>${family}</td><td>${score}</td></tr>`;
+            });
+            output.innerHTML = table;
+        </script>
 
    <script>
     async function loadPyodideAndRun() {
