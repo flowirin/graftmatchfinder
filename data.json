@@ -13,7 +13,7 @@
     {"Species": "Acer saccharum", "Family": "Sapindaceae", "Vessel_Size_μm": 55, "Porosity": "diffuse-porous", "Vessel_Density_per_mm2": 90},
     {"Species": "Betula pendula", "Family": "Betulaceae", "Vessel_Size_μm": 60, "Porosity": "diffuse-porous", "Vessel_Density_per_mm2": 85},
     {"Species": "Fagus sylvatica", "Family": "Fagaceae", "Vessel_Size_μm": 70, "Porosity": "diffuse-porous", "Vessel_Density_per_mm2": 50},
-    {"Species": "Pinus sylvestris", "Family": "Pinaceae", "Vessel_Size_μm": 0, "Porosity": "non-porous", "Vessel_Density_per_mm2": 0},  // Conifer, no vessels
+    {"Species": "Pinus sylvestris", "Family": "Pinaceae", "Vessel_Size_μm": 0, "Porosity": "non-porous", "Vessel_Density_per_mm2": 0},
     {"Species": "Tilia cordata", "Family": "Malvaceae", "Vessel_Size_μm": 65, "Porosity": "diffuse-porous", "Vessel_Density_per_mm2": 70},
     {"Species": "Ulmus americana", "Family": "Ulmaceae", "Vessel_Size_μm": 120, "Porosity": "ring-porous", "Vessel_Density_per_mm2": 35},
     {"Species": "Populus alba", "Family": "Salicaceae", "Vessel_Size_μm": 85, "Porosity": "diffuse-porous", "Vessel_Density_per_mm2": 55},
