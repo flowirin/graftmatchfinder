@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Graft Compatibility v2.0</title>
+    <title>Graft Compatibility v3.0</title>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
     <style>
         table { border-collapse: collapse; margin-top: 10px; }
@@ -12,34 +12,36 @@
             border: 1px solid #ccc; 
             max-height: 200px; 
             overflow-y: auto; 
-            width: 300px;  /* Match input width */
-            z-index: 1000;  /* Ensure it’s on top */
+            width: 300px; 
+            z-index: 1000; 
         }
         #suggestions div { padding: 5px; cursor: pointer; }
         #suggestions div:hover { background: #f0f0f0; }
-        #baseline { width: 300px; }  /* Consistent width */
+        #baseline { width: 300px; }
     </style>
 </head>
 <body>
-    <h1>Graft Compatibility Checker v2.0</h1>
-    <input type="text" id="baseline" placeholder="Type species name..." onkeyup="suggest(this.value)">
+    <h1>Graft Compatibility Checker v3.0</h1>
+    <input type="text" id="baseline" placeholder="Type species name..." onkeyup="debounceSuggest(this.value)">
     <div id="suggestions"></div>
     <button onclick="runScript()">Calculate</button>
     <table id="output" border="1"></table>
 
     <script>
         let speciesData = [];
-        // Load data with error handling
-        fetch('data.json')
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
+        fetch('data.json')  // Swap to 'data.json.gz' when compressed
+            .then(response => response.json())
             .then(data => { 
                 speciesData = data; 
                 console.log("Data loaded:", speciesData.length, "species");
             })
             .catch(err => console.error('Data load failed:', err));
+
+        let debounceTimeout;
+        function debounceSuggest(value) {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => suggest(value), 200);  // 200ms debounce
+        }
 
         function suggest(value) {
             let suggestions = document.getElementById("suggestions");
@@ -47,7 +49,6 @@
                 suggestions.innerHTML = ""; 
                 return; 
             }
-            // Use includes instead of startsWith for broader matches
             let matches = speciesData.filter(s => 
                 s.Species.toLowerCase().includes(value.toLowerCase())
             ).slice(0, 10);
@@ -79,6 +80,7 @@
                 return;
             }
 
+            output.innerHTML = "Calculating...";  // Feedback during calc
             let pythonCode = `
 import pandas as pd
 
