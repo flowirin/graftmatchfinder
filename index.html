@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Graft Compatibility v3.0</title>
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+    <title>Graft Compatibility v4.0</title>
     <style>
         table { border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid black; padding: 5px; text-align: left; }
@@ -21,7 +20,7 @@
     </style>
 </head>
 <body>
-    <h1>Graft Compatibility Checker v3.0</h1>
+    <h1>Graft Compatibility Checker v4.0</h1>
     <input type="text" id="baseline" placeholder="Type species name..." onkeyup="debounceSuggest(this.value)">
     <div id="suggestions"></div>
     <button onclick="runScript()">Calculate</button>
@@ -29,8 +28,11 @@
 
     <script>
         let speciesData = [];
-        fetch('data.json')  // Swap to 'data.json.gz' when compressed
-            .then(response => response.json())
+        fetch('data.json')
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
             .then(data => { 
                 speciesData = data; 
                 console.log("Data loaded:", speciesData.length, "species");
@@ -40,7 +42,7 @@
         let debounceTimeout;
         function debounceSuggest(value) {
             clearTimeout(debounceTimeout);
-            debounceTimeout = setTimeout(() => suggest(value), 200);  // 200ms debounce
+            debounceTimeout = setTimeout(() => suggest(value), 200);
         }
 
         function suggest(value) {
@@ -62,67 +64,40 @@
             document.getElementById("suggestions").innerHTML = "";
         }
 
-        async function loadPyodideAndRun() {
-            let pyodide = await loadPyodide();
-            await pyodide.loadPackage("pandas");
-            return pyodide;
+        function graftCompatibility(base, candidate) {
+            let sizeDiff = Math.abs(base.Vessel_Size_μm - candidate.Vessel_Size_μm) / base.Vessel_Size_μm;
+            let sizeScore = Math.max(0, 1 - sizeDiff / 0.2) * 60;
+            let porosityScore = base.Porosity === candidate.Porosity ? 30 : 0;
+            let densityDiff = Math.abs(base.Vessel_Density_per_mm2 - candidate.Vessel_Density_per_mm2) / base.Vessel_Density_per_mm2;
+            let densityScore = Math.max(0, 1 - densityDiff / 0.3) * 10;
+            return (sizeScore + porosityScore + densityScore).toFixed(2);
         }
 
-        let pyodideReady = loadPyodideAndRun();
-
-        async function runScript() {
-            let pyodide = await pyodideReady;
-            let baseline = document.getElementById("baseline").value;
+        function runScript() {
+            let baselineName = document.getElementById("baseline").value;
             let output = document.getElementById("output");
 
-            if (!speciesData.some(s => s.Species === baseline)) {
+            if (!speciesData.some(s => s.Species === baselineName)) {
                 output.innerHTML = "Error: Species not found";
                 return;
             }
 
-            output.innerHTML = "Calculating...";  // Feedback during calc
-            let pythonCode = `
-import pandas as pd
+            output.innerHTML = "Calculating...";
+            let baseline = speciesData.find(s => s.Species === baselineName);
+            let results = speciesData
+                .filter(s => s.Species !== baselineName)
+                .map(s => ({
+                    Species: s.Species,
+                    Family: s.Family,
+                    Compatibility_Score: graftCompatibility(baseline, s)
+                }))
+                .sort((a, b) => b.Compatibility_Score - a.Compatibility_Score);
 
-data = ${JSON.stringify(speciesData)};
-df = pd.DataFrame(data)
-
-def graft_compatibility(base, candidate):
-    size_diff = abs(float(base["Vessel_Size_μm"]) - float(candidate["Vessel_Size_μm"])) / float(base["Vessel_Size_μm"])
-    size_score = max(0, 1 - size_diff / 0.2) * 60
-    porosity_score = 30 if base["Porosity"] == candidate["Porosity"] else 0
-    density_diff = abs(float(base["Vessel_Density_per_mm2"]) - float(candidate["Vessel_Density_per_mm2"])) / float(base["Vessel_Density_per_mm2"])
-    density_score = max(0, 1 - density_diff / 0.3) * 10
-    return round(size_score + porosity_score + density_score, 2)
-
-baseline = df[df["Species"] == "${baseline}"].iloc[0]
-results = []
-for i, row in df.iterrows():
-    if row["Species"] != "${baseline}":
-        compatibility = graft_compatibility(baseline, row)
-        results.append({"Species": row["Species"], "Family": row["Family"], "Compatibility_Score": str(compatibility)})
-
-results_df = pd.DataFrame(results).sort_values(by="Compatibility_Score", ascending=False)
-output = "Species||Family||Compatibility_Score\\n" + "\\n".join(
-    f"{row['Species']}||{row['Family']}||{row['Compatibility_Score']}" for _, row in results_df.iterrows()
-)
-output
-            `;
-
-            try {
-                let result = await pyodide.runPythonAsync(pythonCode);
-                let lines = result.split("\n");
-                let table = "<tr><th>Species</th><th>Family</th><th>Compatibility Score</th></tr>";
-                for (let i = 1; i < lines.length; i++) {
-                    if (lines[i].trim()) {
-                        let [species, family, score] = lines[i].split("||");
-                        table += `<tr><td>${species}</td><td>${family}</td><td>${score}</td></tr>`;
-                    }
-                }
-                output.innerHTML = table;
-            } catch (err) {
-                output.innerHTML = "Error: " + err.message;
-            }
+            let table = "<tr><th>Species</th><th>Family</th><th>Compatibility Score</th></tr>";
+            results.forEach(row => {
+                table += `<tr><td>${row.Species}</td><td>${row.Family}</td><td>${row.Compatibility_Score}</td></tr>`;
+            });
+            output.innerHTML = table;
         }
     </script>
 </body>
