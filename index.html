@@ -6,26 +6,35 @@
     <style>
         table { border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid black; padding: 5px; text-align: left; }
+        #suggestions { position: absolute; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; }
     </style>
 </head>
 <body>
     <h1>Graft Compatibility Checker</h1>
-    <select id="baseline">
-        <option value="Pistacia vera">Pistacia vera</option>
-        <option value="Juglans regia">Juglans regia</option>
-        <option value="Corylus avellana">Corylus avellana</option>
-        <option value="Prunus dulcis">Prunus dulcis</option>
-        <option value="Syringa vulgaris">Syringa vulgaris</option>
-        <option value="Ligustrum vulgare">Ligustrum vulgare</option>
-        <option value="Prunus avium">Prunus avium</option>
-        <option value="Salix alba">Salix alba</option>
-        <option value="Rhus typhina">Rhus typhina</option>
-        <option value="Schinus molle">Schinus molle</option>
-    </select>
+    <input type="text" id="baseline" placeholder="Type species name..." onkeyup="suggest(this.value)">
+    <div id="suggestions"></div>
     <button onclick="runScript()">Calculate</button>
     <table id="output" border="1"></table>
 
     <script>
+        let speciesData = [];
+        fetch('data.json')  // Load dataset from repo
+            .then(response => response.json())
+            .then(data => { speciesData = data; })
+            .catch(err => console.error('Data load failed:', err));
+
+        function suggest(value) {
+            let suggestions = document.getElementById("suggestions");
+            if (!value) { suggestions.innerHTML = ""; return; }
+            let matches = speciesData.filter(s => s.Species.toLowerCase().startsWith(value.toLowerCase())).slice(0, 10);
+            suggestions.innerHTML = matches.map(s => `<div onclick="selectSpecies('${s.Species}')">${s.Species}</div>`).join("");
+        }
+
+        function selectSpecies(species) {
+            document.getElementById("baseline").value = species;
+            document.getElementById("suggestions").innerHTML = "";
+        }
+
         async function loadPyodideAndRun() {
             let pyodide = await loadPyodide();
             await pyodide.loadPackage("pandas");
@@ -39,29 +48,23 @@
             let baseline = document.getElementById("baseline").value;
             let output = document.getElementById("output");
 
+            if (!speciesData.some(s => s.Species === baseline)) {
+                output.innerHTML = "Error: Species not found";
+                return;
+            }
+
             let pythonCode = `
 import pandas as pd
 
-data = {
-    "Species": ["Pistacia vera", "Juglans regia", "Corylus avellana", "Prunus dulcis",
-                "Syringa vulgaris", "Ligustrum vulgare", "Prunus avium", "Salix alba",
-                "Rhus typhina", "Schinus molle"],
-    "Family": ["Anacardiaceae", "Juglandaceae", "Betulaceae", "Rosaceae",
-               "Oleaceae", "Oleaceae", "Rosaceae", "Salicaceae",
-               "Anacardiaceae", "Anacardiaceae"],
-    "Vessel_Size_μm": [75, 150, 50, 80, 40, 45, 90, 100, 60, 70],
-    "Porosity": ["ring-porous", "ring-porous", "diffuse-porous", "ring-porous",
-                 "diffuse-porous", "diffuse-porous", "ring-porous", "ring-porous",
-                 "ring-porous", "ring-porous"],
-    "Vessel_Density_per_mm2": [75, 30, 100, 60, 80, 85, 50, 60, 70, 65]
-}
+# Load data from JS-passed array
+data = ${JSON.stringify(speciesData)};
 df = pd.DataFrame(data)
 
 def graft_compatibility(base, candidate):
-    size_diff = abs(base["Vessel_Size_μm"] - candidate["Vessel_Size_μm"]) / base["Vessel_Size_μm"]
+    size_diff = abs(float(base["Vessel_Size_μm"]) - float(candidate["Vessel_Size_μm"])) / float(base["Vessel_Size_μm"])
     size_score = max(0, 1 - size_diff / 0.2) * 60
     porosity_score = 30 if base["Porosity"] == candidate["Porosity"] else 0
-    density_diff = abs(base["Vessel_Density_per_mm2"] - candidate["Vessel_Density_per_mm2"]) / base["Vessel_Density_per_mm2"]
+    density_diff = abs(float(base["Vessel_Density_per_mm2"]) - float(candidate["Vessel_Density_per_mm2"])) / float(base["Vessel_Density_per_mm2"])
     density_score = max(0, 1 - density_diff / 0.3) * 10
     return round(size_score + porosity_score + density_score, 2)
 
@@ -73,7 +76,6 @@ for i, row in df.iterrows():
         results.append({"Species": row["Species"], "Family": row["Family"], "Compatibility_Score": str(compatibility)})
 
 results_df = pd.DataFrame(results).sort_values(by="Compatibility_Score", ascending=False)
-# Use a clear delimiter (||) instead of tabs
 output = "Species||Family||Compatibility_Score\\n" + "\\n".join(
     f"{row['Species']}||{row['Family']}||{row['Compatibility_Score']}" for _, row in results_df.iterrows()
 )
@@ -84,7 +86,7 @@ output
                 let result = await pyodide.runPythonAsync(pythonCode);
                 let lines = result.split("\n");
                 let table = "<tr><th>Species</th><th>Family</th><th>Compatibility Score</th></tr>";
-                for (let i = 1; i < lines.length; i++) {  // Skip header
+                for (let i = 1; i < lines.length; i++) {
                     if (lines[i].trim()) {
                         let [species, family, score] = lines[i].split("||");
                         table += `<tr><td>${species}</td><td>${family}</td><td>${score}</td></tr>`;
