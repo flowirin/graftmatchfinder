@@ -21,22 +21,22 @@
     <button onclick="runScript()">Calculate</button>
     <pre id="output"></pre>
 
-    <script>
-        async function loadPyodideAndRun() {
-            let pyodide = await loadPyodide();
-            await pyodide.loadPackage("pandas");  // Load pandas for DataFrame
-            return pyodide;
-        }
+   <script>
+    async function loadPyodideAndRun() {
+        let pyodide = await loadPyodide();
+        await pyodide.loadPackage("pandas");
+        return pyodide;
+    }
 
-        let pyodideReady = loadPyodideAndRun();
+    let pyodideReady = loadPyodideAndRun();
 
-        async function runScript() {
-            let pyodide = await pyodideReady;
-            let baseline = document.getElementById("baseline").value;
-            let output = document.getElementById("output");
+    async function runScript() {
+        let pyodide = await pyodideReady;
+        let baseline = document.getElementById("baseline").value;
+        let output = document.getElementById("output");
 
-            // Python code to run
-            let pythonCode = `
+        // Python code with explicit return
+        let pythonCode = `
 import pandas as pd
 
 data = {
@@ -70,16 +70,17 @@ for i, row in df.iterrows():
         results.append({"Species": row["Species"], "Family": row["Family"], "Compatibility_Score": compatibility})
 
 results_df = pd.DataFrame(results).sort_values(by="Compatibility_Score", ascending=False)
-print(f"Grafting compatibility with ${baseline}:\\n{results_df.to_string(index=False)}")
-            `;
+output = f"Grafting compatibility with ${baseline}:\\n{results_df.to_string(index=False)}"
+output  # Return the string explicitly
+        `;
 
-            try {
-                let result = await pyodide.runPythonAsync(pythonCode);
-                output.textContent = result || "No output";
-            } catch (err) {
-                output.textContent = "Error: " + err.message;
-            }
+        try {
+            let result = await pyodide.runPythonAsync(pythonCode);
+            output.textContent = result || "Something went wrong—no result returned";
+        } catch (err) {
+            output.textContent = "Error: " + err.message;
         }
-    </script>
+    }
+</script>
 </body>
 </html>
