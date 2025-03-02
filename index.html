@@ -6,7 +6,18 @@
     <style>
         table { border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid black; padding: 5px; text-align: left; }
-        #suggestions { position: absolute; background: white; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; }
+        #suggestions { 
+            position: absolute; 
+            background: white; 
+            border: 1px solid #ccc; 
+            max-height: 200px; 
+            overflow-y: auto; 
+            width: 300px;  /* Match input width */
+            z-index: 1000;  /* Ensure it’s on top */
+        }
+        #suggestions div { padding: 5px; cursor: pointer; }
+        #suggestions div:hover { background: #f0f0f0; }
+        #baseline { width: 300px; }  /* Consistent width */
     </style>
 </head>
 <body>
@@ -18,16 +29,31 @@
 
     <script>
         let speciesData = [];
-        fetch('data.json')  // Load dataset from repo
-            .then(response => response.json())
-            .then(data => { speciesData = data; })
+        // Load data with error handling
+        fetch('data.json')
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => { 
+                speciesData = data; 
+                console.log("Data loaded:", speciesData.length, "species");
+            })
             .catch(err => console.error('Data load failed:', err));
 
         function suggest(value) {
             let suggestions = document.getElementById("suggestions");
-            if (!value) { suggestions.innerHTML = ""; return; }
-            let matches = speciesData.filter(s => s.Species.toLowerCase().startsWith(value.toLowerCase())).slice(0, 10);
-            suggestions.innerHTML = matches.map(s => `<div onclick="selectSpecies('${s.Species}')">${s.Species}</div>`).join("");
+            if (!value || speciesData.length === 0) { 
+                suggestions.innerHTML = ""; 
+                return; 
+            }
+            // Use includes instead of startsWith for broader matches
+            let matches = speciesData.filter(s => 
+                s.Species.toLowerCase().includes(value.toLowerCase())
+            ).slice(0, 10);
+            suggestions.innerHTML = matches.length > 0 
+                ? matches.map(s => `<div onclick="selectSpecies('${s.Species}')">${s.Species}</div>`).join("")
+                : "<div>No matches found</div>";
         }
 
         function selectSpecies(species) {
@@ -56,7 +82,6 @@
             let pythonCode = `
 import pandas as pd
 
-# Load data from JS-passed array
 data = ${JSON.stringify(speciesData)};
 df = pd.DataFrame(data)
 
