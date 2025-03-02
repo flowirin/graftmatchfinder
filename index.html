@@ -20,17 +20,7 @@
     </select>
     <button onclick="runScript()">Calculate</button>
    <table id="output" border="1"></table>
-        <script>
-            // ... runScript() ...
-            let rows = result.split("\n").slice(1);  // Skip header
-            let table = "<tr><th>Species</th><th>Family</th><th>Score</th></tr>";
-            rows.forEach(row => {
-                let [species, family, score] = row.trim().split(/\s+/);
-                table += `<tr><td>${species}</td><td>${family}</td><td>${score}</td></tr>`;
-            });
-            output.innerHTML = table;
-        </script>
-
+       
    <script>
     async function loadPyodideAndRun() {
         let pyodide = await loadPyodide();
@@ -86,7 +76,15 @@ output  # Return the string explicitly
 
         try {
             let result = await pyodide.runPythonAsync(pythonCode);
-            output.textContent = result || "Something went wrong—no result returned";
+             let lines = result.split("\n");
+                let table = "<tr><th>Species</th><th>Family</th><th>Compatibility Score</th></tr>";
+                for (let i = 1; i < lines.length; i++) {  // Skip header
+                    if (lines[i].trim()) {  // Ignore empty lines
+                        let [species, family, score] = lines[i].split("\t");
+                        table += `<tr><td>${species}</td><td>${family}</td><td>${score}</td></tr>`;
+                    }
+                }
+                output.innerHTML = table || "Something went wrong—no result returned";
         } catch (err) {
             output.textContent = "Error: " + err.message;
         }
