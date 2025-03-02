@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Graft Compatibility</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+</head>
+<body>
+    <h1>Graft Compatibility Checker</h1>
+    <select id="baseline">
+        <option value="Pistacia vera">Pistacia vera</option>
+        <option value="Juglans regia">Juglans regia</option>
+        <option value="Corylus avellana">Corylus avellana</option>
+        <option value="Prunus dulcis">Prunus dulcis</option>
+        <option value="Syringa vulgaris">Syringa vulgaris</option>
+        <option value="Ligustrum vulgare">Ligustrum vulgare</option>
+        <option value="Prunus avium">Prunus avium</option>
+        <option value="Salix alba">Salix alba</option>
+        <option value="Rhus typhina">Rhus typhina</option>
+        <option value="Schinus molle">Schinus molle</option>
+    </select>
+    <button onclick="runScript()">Calculate</button>
+    <pre id="output"></pre>
+
+    <script>
+        async function loadPyodideAndRun() {
+            let pyodide = await loadPyodide();
+            await pyodide.loadPackage("pandas");  // Load pandas for DataFrame
+            return pyodide;
+        }
+
+        let pyodideReady = loadPyodideAndRun();
+
+        async function runScript() {
+            let pyodide = await pyodideReady;
+            let baseline = document.getElementById("baseline").value;
+            let output = document.getElementById("output");
+
+            // Python code to run
+            let pythonCode = `
+import pandas as pd
+
+data = {
+    "Species": ["Pistacia vera", "Juglans regia", "Corylus avellana", "Prunus dulcis",
+                "Syringa vulgaris", "Ligustrum vulgare", "Prunus avium", "Salix alba",
+                "Rhus typhina", "Schinus molle"],
+    "Family": ["Anacardiaceae", "Juglandaceae", "Betulaceae", "Rosaceae",
+               "Oleaceae", "Oleaceae", "Rosaceae", "Salicaceae",
+               "Anacardiaceae", "Anacardiaceae"],
+    "Vessel_Size_μm": [75, 150, 50, 80, 40, 45, 90, 100, 60, 70],
+    "Porosity": ["ring-porous", "ring-porous", "diffuse-porous", "ring-porous",
+                 "diffuse-porous", "diffuse-porous", "ring-porous", "ring-porous",
+                 "ring-porous", "ring-porous"],
+    "Vessel_Density_per_mm2": [75, 30, 100, 60, 80, 85, 50, 60, 70, 65]
+}
+df = pd.DataFrame(data)
+
+def graft_compatibility(base, candidate):
+    size_diff = abs(base["Vessel_Size_μm"] - candidate["Vessel_Size_μm"]) / base["Vessel_Size_μm"]
+    size_score = max(0, 1 - size_diff / 0.2) * 60
+    porosity_score = 30 if base["Porosity"] == candidate["Porosity"] else 0
+    density_diff = abs(base["Vessel_Density_per_mm2"] - candidate["Vessel_Density_per_mm2"]) / base["Vessel_Density_per_mm2"]
+    density_score = max(0, 1 - density_diff / 0.3) * 10
+    return round(size_score + porosity_score + density_score, 2)
+
+baseline = df[df["Species"] == "${baseline}"].iloc[0]
+results = []
+for i, row in df.iterrows():
+    if row["Species"] != "${baseline}":
+        compatibility = graft_compatibility(baseline, row)
+        results.append({"Species": row["Species"], "Family": row["Family"], "Compatibility_Score": compatibility})
+
+results_df = pd.DataFrame(results).sort_values(by="Compatibility_Score", ascending=False)
+print(f"Grafting compatibility with ${baseline}:\\n{results_df.to_string(index=False)}")
+            `;
+
+            try {
+                let result = await pyodide.runPythonAsync(pythonCode);
+                output.textContent = result || "No output";
+            } catch (err) {
+                output.textContent = "Error: " + err.message;
+            }
+        }
+    </script>
+</body>
+</html>
