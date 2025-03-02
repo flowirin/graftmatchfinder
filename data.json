@@ -1,4 +1,22 @@
 [
-  {"Species": "Pistacia vera", "Family": "Anacardiaceae", "Vessel_Size_μm": 75, "Porosity": "ring-porous", "Vessel_Density_per_mm2": 75},
-  ...
+    {"Species": "Pistacia vera", "Family": "Anacardiaceae", "Vessel_Size_μm": 75, "Porosity": "ring-porous", "Vessel_Density_per_mm2": 75},
+    {"Species": "Juglans regia", "Family": "Juglandaceae", "Vessel_Size_μm": 150, "Porosity": "ring-porous", "Vessel_Density_per_mm2": 30},
+    {"Species": "Corylus avellana", "Family": "Betulaceae", "Vessel_Size_μm": 50, "Porosity": "diffuse-porous", "Vessel_Density_per_mm2": 100},
+    {"Species": "Prunus dulcis", "Family": "Rosaceae", "Vessel_Size_μm": 80, "Porosity": "ring-porous", "Vessel_Density_per_mm2": 60},
+    {"Species": "Syringa vulgaris", "Family": "Oleaceae", "Vessel_Size_μm": 40, "Porosity": "diffuse-porous", "Vessel_Density_per_mm2": 80},
+    {"Species": "Ligustrum vulgare", "Family": "Oleaceae", "Vessel_Size_μm": 45, "Porosity": "diffuse-porous", "Vessel_Density_per_mm2": 85},
+    {"Species": "Prunus avium", "Family": "Rosaceae", "Vessel_Size_μm": 90, "Porosity": "ring-porous", "Vessel_Density_per_mm2": 50},
+    {"Species": "Salix alba", "Family": "Salicaceae", "Vessel_Size_μm": 100, "Porosity": "ring-porous", "Vessel_Density_per_mm2": 60},
+    {"Species": "Rhus typhina", "Family": "Anacardiaceae", "Vessel_Size_μm": 60, "Porosity": "ring-porous", "Vessel_Density_per_mm2": 70},
+    {"Species": "Schinus molle", "Family": "Anacardiaceae", "Vessel_Size_μm": 70, "Porosity": "ring-porous", "Vessel_Density_per_mm2": 65},
+    {"Species": "Quercus robur", "Family": "Fagaceae", "Vessel_Size_μm": 200, "Porosity": "ring-porous", "Vessel_Density_per_mm2": 20},
+    {"Species": "Acer saccharum", "Family": "Sapindaceae", "Vessel_Size_μm": 55, "Porosity": "diffuse-porous", "Vessel_Density_per_mm2": 90},
+    {"Species": "Betula pendula", "Family": "Betulaceae", "Vessel_Size_μm": 60, "Porosity": "diffuse-porous", "Vessel_Density_per_mm2": 85},
+    {"Species": "Fagus sylvatica", "Family": "Fagaceae", "Vessel_Size_μm": 70, "Porosity": "diffuse-porous", "Vessel_Density_per_mm2": 50},
+    {"Species": "Pinus sylvestris", "Family": "Pinaceae", "Vessel_Size_μm": 0, "Porosity": "non-porous", "Vessel_Density_per_mm2": 0},  // Conifer, no vessels
+    {"Species": "Tilia cordata", "Family": "Malvaceae", "Vessel_Size_μm": 65, "Porosity": "diffuse-porous", "Vessel_Density_per_mm2": 70},
+    {"Species": "Ulmus americana", "Family": "Ulmaceae", "Vessel_Size_μm": 120, "Porosity": "ring-porous", "Vessel_Density_per_mm2": 35},
+    {"Species": "Populus alba", "Family": "Salicaceae", "Vessel_Size_μm": 85, "Porosity": "diffuse-porous", "Vessel_Density_per_mm2": 55},
+    {"Species": "Carya ovata", "Family": "Juglandaceae", "Vessel_Size_μm": 140, "Porosity": "ring-porous", "Vessel_Density_per_mm2": 25},
+    {"Species": "Liriodendron tulipifera", "Family": "Magnoliaceae", "Vessel_Size_μm": 110, "Porosity": "diffuse-porous", "Vessel_Density_per_mm2": 40}
 ]
